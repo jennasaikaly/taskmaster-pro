@@ -1,6 +1,6 @@
 var tasks = {};
 
-var createTask = function(taskText, taskDate, taskList) {
+var createTask = function(taskText, taskDate, taskList) { 
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
   var taskSpan = $("<span>")
@@ -45,8 +45,70 @@ var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+//CODE TO ADD ABILITY TO EDIT TASKS//
+//this is event delegation which delegates the click to the parent (.list-group)
+// when the p element is clicked
+$(".list-group").on("click", "p", function() {
+  //gets the inner text content of the current element represented by $(this)
+  var text = $(this)
+  .text()  //'this' can be used on dom elements  
+  .trim();  //can chain these together, trim gets rid of extra white space before or after
+  console.log(text);
 
 
+  //creates a dynamic element (added <>)
+  var textInput = $("<textarea>")
+  .addClass("form-control")
+  .val(text);
+
+  
+  //replaces (and appends) the existing <p> element with the new textarea 
+  //when user clicks on the task description, the div will change into a textarea
+  //that they can now type and edit in
+  $(this).replaceWith(textInput);
+//  highlights the input box
+  textInput.trigger("focus");
+
+});
+//new event listener that makes anything else go blurry as soon as the user interacts
+//with anything other than the textarea element
+$(".list-group").on("blur", "textarea", function() {
+
+  //STATUS VARIABLE INITIALIZATION//
+// get the textarea's current value/text
+var text = $(this)
+  .val()
+  .trim();
+
+// get the parent ul's id attribute
+var status = $(this)
+  .closest(".list-group")
+  .attr("id")
+  .replace("list-", "");
+
+// get the task's position in the list of other li elements
+var index = $(this)
+  .closest(".list-group-item")
+  .index();
+
+  //updates teh overarching 'tasks' object with placeholders because we don't know the 
+  //values ahead of time
+//tasks is an object
+//tasks[status] returns an array (eg toDo)
+//tasks[status][index] returns the object at the given index in the array
+//tasls[status][index].text returns the text property of the object at the given index
+  
+  tasks[status][index].text = text; //this info is needed for local storage so save tasks is called immediately after
+saveTasks();
+
+// recreate p element
+var taskP = $("<p>")
+  .addClass("m-1")
+  .text(text);
+
+// replace textarea with p element
+$(this).replaceWith(taskP);
+});
 
 // modal was triggered
 $("#task-form-modal").on("show.bs.modal", function() {
