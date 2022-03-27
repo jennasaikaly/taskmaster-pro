@@ -13,7 +13,6 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
-
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
 };
@@ -45,6 +44,122 @@ var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+//SORTABLE
+//
+$(".card .list-group").sortable({
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  // creates a copy and moves the copy instead of the original.
+// this helps prevent click events from accidentally triggering on the original
+  helper: "clone", 
+  //sortable event listeners:
+  //triggers once for all connected lists as soon as dragging starts
+  activate: function(event, ui) { 
+    console.log(ui);
+  },
+  //triggers once for all connected lists as soon as dragging stops
+  deactivate: function(event, ui) {
+    console.log(ui);
+  },
+  //triggers when a dragged item enters a connected list
+  over: function(event) {
+    console.log(event);
+  },
+  //triggers when a dragged item leaves a connected list
+  out: function(event) {
+    console.log(event);
+  },
+  //triggers when the contents of a list have changed (i.e. reordered, removed, added)
+  update: function() {
+        // array to store the task data in
+        var tempArr = [];
+        // loop over current set of children in sortable list
+        $(this)
+        .children()
+        .each(function() { //this 
+          console.log($(this)); //this refers tothe task li child element at that index
+          //saves values in temp array
+          tempArr.push({
+          text: $(this)
+        .find("p")
+        .text()
+        .trim(),
+
+        date: $(this)
+        .find("span")
+        .text()
+        .trim()
+     });
+    });
+
+    //OVERWRITE WHAT IS SAVED IN THE TASKS OBJECT
+    // trim down list's ID to match object property
+var arrName = $(this)
+.attr("id")
+.replace("list-", "");
+
+// update array on tasks object and save
+tasks[arrName] = tempArr;
+saveTasks();
+    },
+    stop: function(event) {
+      $(this).removeClass("dropover");
+    }
+});
+
+//DROPABLE
+// trim down list's ID to match object property
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) {
+    // remove dragged element from the dom
+    ui.draggable.remove();
+  },
+  over: function(event, ui) {
+    console.log(ui);
+  },
+  out: function(event, ui) {
+    console.log(ui);
+  }
+
+});
+
+// modal was triggered
+$("#task-form-modal").on("show.bs.modal", function() {
+  // clear values
+  $("#modalTaskDescription, #modalDueDate").val("");
+});
+
+// modal is fully visible
+$("#task-form-modal").on("shown.bs.modal", function() {
+  // highlight textarea
+  $("#modalTaskDescription").trigger("focus");
+});
+
+// save button in modal was clicked
+$("#task-form-modal .btn-primary").click(function() {
+  // get form values
+  var taskText = $("#modalTaskDescription").val();
+  var taskDate = $("#modalDueDate").val();
+
+  if (taskText && taskDate) {
+    createTask(taskText, taskDate, "toDo");
+
+    // close modal
+    $("#task-form-modal").modal("hide");
+
+    // save in tasks array
+    tasks.toDo.push({
+      text: taskText,
+      date: taskDate
+    });
+
+    saveTasks();
+  }
+});
+
 //CODE TO ADD ABILITY TO EDIT TASKS//
 //this is event delegation which delegates the click to the parent (.list-group)
 // when the p element is clicked
@@ -59,10 +174,7 @@ $(".list-group").on("click", "p", function() {
   //creates a dynamic element (added <>)
   var textInput = $("<textarea>")
   .addClass("form-control")
-  .val(text);
-
-  
-  //replaces (and appends) the existing <p> element with the new textarea 
+    //replaces (and appends) the existing <p> element with the new textarea 
   //when user clicks on the task description, the div will change into a textarea
   //that they can now type and edit in
   $(this).replaceWith(textInput);
@@ -127,7 +239,7 @@ $(".list-group").on("click", "span", function() {
   // swap out elements
   $(this).replaceWith(dateInput);
 
-  // automatically focus on new element
+  // automatically focus on new element (bring up the calendar)
   dateInput.trigger("focus");
 });
 
@@ -138,8 +250,7 @@ $(".list-group").on("blur", "input[type='text']", function() {
   // get current text
   var date = $(this)
     .val()
-    .trim();
-
+    
   // get the parent ul's id attribute
   var status = $(this)
     .closest(".list-group")
@@ -164,115 +275,17 @@ $(".list-group").on("blur", "input[type='text']", function() {
   $(this).replaceWith(taskSpan);
 });
 
-
-// modal was triggered
-$("#task-form-modal").on("show.bs.modal", function() {
-  // clear values
-  $("#modalTaskDescription, #modalDueDate").val("");
-});
-
-// modal is fully visible
-$("#task-form-modal").on("shown.bs.modal", function() {
-  // highlight textarea
-  $("#modalTaskDescription").trigger("focus");
-});
-
-// save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
-  // get form values
-  var taskText = $("#modalTaskDescription").val();
-  var taskDate = $("#modalDueDate").val();
-
-  if (taskText && taskDate) {
-    createTask(taskText, taskDate, "toDo");
-
-    // close modal
-    $("#task-form-modal").modal("hide");
-
-    // save in tasks array
-    tasks.toDo.push({
-      text: taskText,
-      date: taskDate
-    });
-
-    saveTasks();
-  }
-});
-
 // remove all tasks
 $("#remove-tasks").on("click", function() {
   for (var key in tasks) {
     tasks[key].length = 0;
     $("#list-" + key).empty();
   }
+  console.log(tasks);
   saveTasks();
 });
 
 // load tasks for the first time
 loadTasks();
-
-
-//SORTABLE
-//
-$(".card .list-group").sortable({
-  connectWith: $(".card .list-group"),
-  scroll: false,
-  tolerance: "pointer",
-  // creates a copy and moves the copy instead of the original.
-// this helps prevent click events from accidentally triggering on the original
-  helper: "clone", 
-  //sortable event listeners:
-  //triggers once for all connected lists as soon as dragging starts
-  activate: function(event) { 
-    console.log("activate", this);
-  },
-  //triggers once for all connected lists as soon as dragging stops
-  deactivate: function(event) {
-    console.log("deactivate", this);
-  },
-  //triggers when a dragged item enters a connected list
-  over: function(event) {
-    console.log("over", event.target);
-  },
-  //triggers when a dragged item leaves a connected list
-  out: function(event) {
-    console.log("out", event.target);
-  },
-  //triggers when the contents of a list have changed (i.e. reordered, removed, added)
-  update: function(event) {
-        // array to store the task data in
-        var tempArr = [];
-        // loop over current set of children in sortable list
-        $(this).children().each(function() { //this 
-          console.log($(this)); //this refers tothe task li child element at that index
-
-          var text = $(this)
-        .find("p")
-        .text()
-        .trim();
-
-      var date = $(this)
-        .find("span")
-        .text()
-        .trim();
-
-        // add task data to the temp array as an object
-      tempArr.push({
-        text: text,
-        date: date
-      });
-    });
-
-    // trim down list's ID to match object property
-var arrName = $(this)
-.attr("id")
-.replace("list-", "");
-
-// update array on tasks object and save
-tasks[arrName] = tempArr;
-saveTasks();
-    
-  }
-});
 
 
