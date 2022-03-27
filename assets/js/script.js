@@ -212,3 +212,67 @@ $("#remove-tasks").on("click", function() {
 loadTasks();
 
 
+//SORTABLE
+//
+$(".card .list-group").sortable({
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  // creates a copy and moves the copy instead of the original.
+// this helps prevent click events from accidentally triggering on the original
+  helper: "clone", 
+  //sortable event listeners:
+  //triggers once for all connected lists as soon as dragging starts
+  activate: function(event) { 
+    console.log("activate", this);
+  },
+  //triggers once for all connected lists as soon as dragging stops
+  deactivate: function(event) {
+    console.log("deactivate", this);
+  },
+  //triggers when a dragged item enters a connected list
+  over: function(event) {
+    console.log("over", event.target);
+  },
+  //triggers when a dragged item leaves a connected list
+  out: function(event) {
+    console.log("out", event.target);
+  },
+  //triggers when the contents of a list have changed (i.e. reordered, removed, added)
+  update: function(event) {
+        // array to store the task data in
+        var tempArr = [];
+        // loop over current set of children in sortable list
+        $(this).children().each(function() { //this 
+          console.log($(this)); //this refers tothe task li child element at that index
+
+          var text = $(this)
+        .find("p")
+        .text()
+        .trim();
+
+      var date = $(this)
+        .find("span")
+        .text()
+        .trim();
+
+        // add task data to the temp array as an object
+      tempArr.push({
+        text: text,
+        date: date
+      });
+    });
+
+    // trim down list's ID to match object property
+var arrName = $(this)
+.attr("id")
+.replace("list-", "");
+
+// update array on tasks object and save
+tasks[arrName] = tempArr;
+saveTasks();
+    
+  }
+});
+
+
