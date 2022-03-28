@@ -3,6 +3,7 @@ console.log(moment().format());
 var tasks = {};
 
 var auditTask = function(taskEl) {
+  console.log(taskEl)
   // get date from task element
   var date = $(taskEl).find("span").text().trim();
   // ensure it worked
@@ -88,18 +89,26 @@ $(".card .list-group").sortable({
   //sortable event listeners:
   //triggers once for all connected lists as soon as dragging starts
   activate: function(event, ui) { 
+    $(this).addClass("dropover");
+    $(".bottom-trash").addClass("bottom-trash-drag");
     console.log(ui);
   },
   //triggers once for all connected lists as soon as dragging stops
   deactivate: function(event, ui) {
+    $(this).removeClass(".dropover");
+    $(".bottom-trash").removeClass("bottom-trash-drag");
     console.log(ui);
   },
   //triggers when a dragged item enters a connected list
   over: function(event) {
+    $(event.target).addClass("dropover-active");
+    $(".bottom-trash").addClass("bottom-trash-active");
     console.log(event);
   },
   //triggers when a dragged item leaves a connected list
   out: function(event) {
+    $(event.target).removeClass("dropover-active");
+    $(".bottom-trash").removeClass("bottom-trash-active");
     console.log(event);
   },
   //triggers when the contents of a list have changed (i.e. reordered, removed, added)
@@ -171,7 +180,7 @@ $("#task-form-modal").on("shown.bs.modal", function() {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
+$("#task-form-modal .btn-save").click(function() {
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -338,7 +347,11 @@ $("#modalDueDate").datepicker({
   minDate: 1 // minumum date is one day from the current date
 });
 
-
+setInterval(function () {
+  $(".card .list-group-item").each(function(index, el) {
+    auditTask(el);
+  });
+}, (1000 * 60) * 30);
 
 
 
